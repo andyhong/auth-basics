@@ -86,23 +86,29 @@ app.get("/", (req, res) => {
 })
 
 app.get("/signup", (req, res) => {
-  res.render("sign-up-form")
+  res.render("sign-up-form", { message: null })
 })
 
 app.post("/signup", (req, res, next) => {
-  bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
-    if (err) {
-      return next(err)
+  User.findOne({ username: req.body.username }, (err, user) => {
+    if (user) {
+      res.render("sign-up-form", { message: "user already exists" })
+    } else {
+      bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
+        if (err) {
+          return next(err)
+        }
+        const user = new User({
+          username: req.body.username,
+          password: hashedPassword,
+        }).save((err) => {
+          if (err) {
+            return next(err)
+          }
+          res.redirect("/")
+        })
+      })
     }
-    const user = new User({
-      username: req.body.username,
-      password: hashedPassword,
-    }).save((err) => {
-      if (err) {
-        return next(err)
-      }
-      res.redirect("/")
-    })
   })
 })
 
